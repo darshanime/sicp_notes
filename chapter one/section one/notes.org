@@ -224,3 +224,28 @@ meh. i cannot really say why it failed
     (cube-iter (improve-guess y x) x)))
 
 #+end_src
+
+** Procedures as black-box abstractions
+
+1. ~sqrt-iter~ has a recursive definition. To have any meaning, it must have a base terminal condition.
+2. The names of the formal parameters (the arguments to the function) can be named anything. They are local to the procedure body. It is a /bound variable/, the procedure /binds/ its formal parameters. /Free/ variables are the ones that aren't bound. The area where the formal variable is bound by it's name is it's /scope/. In our ~improve_guess~, ~y~ and ~x~ were bound, ~/~, ~+~ etc were free
+3. So, one way of name isolation is binding the formal arguments to the body of the procedure. Another is allowing procedures to have internal definitions that are local to them(this nesting of definition is called /block structure/). This way, we can share the bound variables of the outermost procedure. This is called /lexical scoping/
+*Lexical scoping* dictates that free variables in a procedure are taken to refer to bindings made by enclosing procedure definitions; that is, they are looked up in the environment in which the procedure was defined.
+Or, Lexical scoping is simply saying that for any procedure, a free variable for it may in fact be bound to a procedure enclosing it
+
+In a block structure, the last expression of the procedure body is returned.
+example:
+
+#+begin_src lisp
+(define (sqrt x)
+  (define (good-enough? guess)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess)
+    (average guess (/ x guess)))
+  (define (sqrt-iter guess)
+    (if (good-enough? guess)
+        guess
+        (sqrt-iter (improve guess))))
+  (sqrt-iter 1.0))
+#+end_src
+
