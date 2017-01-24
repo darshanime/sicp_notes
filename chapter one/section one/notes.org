@@ -1,0 +1,226 @@
+# Structure and Interpretation of Computer Programs
+
+* 1.1 The Elements of Programming
+
+*computational process* - the spirit that we evolve with our spells (the *program*)
+
+/The acts of the mind, wherein it exerts its power over simple ideas, are chiefly these three: 1. Combining several simple ideas into one compound one, and thus all complex ideas are made. 2. The second is bringing two ideas, whether simple or complex, together, and setting them by one another so as to take a view of them at once, without uniting them into one, by which it gets all its ideas of relations. 3. The third is separating them from all other ideas that accompany them in their real existence: this is called abstraction, and thus all its general ideas are made./
+- John Locke, An Essay Concerning Human Understanding (1690)
+
+Reiterating, there are three main "constructs" that help us communicate:
+1. combining several simple ideas into one compound one
+2. being able to bring 2 complex ideas together and viewing them as complementary and not uniting them as one
+3. separating them from all other ideas
+
+Scheme gives us all three:
+1. Primitive expressions
+- they are the atomic entities the language is concerned with (the basic datatypes like integer)
+
+2. means of combination
+- by which you can combine the primitive expressions into compound elements
+
+3. means of abstraction
+- by which you can name these compound elements so as to separate them from one another. This also gives the ability to view 2 compound elements as complementary to one another
+
+
+*Expressions* - anything that you type, the spell that you write for the interpreter. Which is *evaluated* by it.
+eg, "5" is an expression
+
+Point 3 above says scheme provides an abstraction to name the compound expressions. 
+*define* is the simplest of all.
+
+*prefix notation* - writing (operator operands)
+*combinations* - expressions in parentheses in which the operands are applied to the operator
+eg, (+ 1 1), but not 
+(define foo-bar 1) because here, we aren't applying foo-bar and 1 to define.
+This is because define is a special form, it has it's own evaluation rule. 
+
+
+#+begin_src lisp
+(define <name> <expression>)
+#+end_src
+
+** Evaluating Combinations
+
+Use the simple rule: 
+1. evaluate subexpressions of the combination
+2. evaluate the expression
+
+this is a recursive rule. 
+
+*Procedure definations* -> naming compound combinations so that they can be referred to as a unit
+eg: 
+#+begin_src lisp
+(define (<name> <formal parameters>) <body>)
+(define (square x) (* x x))
+#+end_src
+
+To apply a compound procedure to arguments, (since it has a special evaluation rule)
+- evaluate the body of the procedure with each formal parameter replaced by the arg given
+
+i.e. in the body of the procedure, replace the arg with the value given (if given compound expressions as args, evaluate them first)
+
+This is the /substitution model/. It is implemented in the interpreter by replacing the args in the body with their values in the local environment
+
+Applicative order - apply the operator to the operands
+("evaluate arguments((in case they are compound)) and apply")
+Normal order - don't apply the operator until you have to, just expand the operator 
+("fully expand and then apply((reduce))")
+
+Applicative order used by Interpreter 
+
+** more special forms
+
+we already know about "define"
+Now we have "cond" and "if"
+
+#+begin_src lisp
+(cond (<p1> <e1>)
+      (<p2> <e2>)
+          ...
+      (<pn> <e>))
+#+end_src
+
+<p> - predicate
+<e> - expression returned if predicate is true
+
+
+#+begin_src if
+(if <predicate> <consequent> <alternative>)
+#+end_src
+
+** Exercises
+
+#+begin_src lisp
+;; Ex 1.2
+(/ (+ 5 (+ 4 (- 2 (- 3 (+ 6 (/ 4 3)))))) (* 3 (- 6 (- 2 7))))
+#+end_src
+
+#+begin_src lisp
+;; Ex 1.3
+(define (sum-squares-2-of-3 a b c)
+  (cond ((and (> a b) (> b c)) (+ (* a a) (* b b)))
+        ((and (> a b) (> c b)) (+ (* a a) (* c c)))
+        ((and (> b a) (> a c)) (+ (* a a) (* b b)))
+        ((and (> b a) (> c a)) (+ (* b b) (* c c)))))
+#+end_src
+
+;; Ex 1.4
+We can have compound expressions for operators. 
+so, `(if (> b 0) + -)` returns + operator if b>0, else - operator
+
+;; Ex 1.5
+
+#+begin_src lisp
+;; In an applicative order evaluation, 
+
+(test 0 (p))
+
+(if (= 0 0)
+  0
+  p)
+
+0
+
+;; In normal order evaaluation,
+(test 0 (p))
+(test 0 (p))
+(test 0 (p))
+(test 0 (p))
+   ... 
+;; he would never get any solution, it will be an infinite recursive loop
+#+end_src
+
+** Newton's method
+
+Mathematics is **declarative** - it gives a description of "what something is" like. 
+Computer Science is **imperative** - it has to talk about "how to implement" something 
+
+Net won's method of finding square roots
+1. let y = x**2
+2. Start with y=1. Iterate, y--> (y+y/x)/2 till the difference b/w successive values of y becomes small
+
+#+begin_src lisp
+
+(define (sqrt x)
+  (sqrt-iter 1 x))
+
+(define THRESHOLD 0.001)
+
+(define (improve-guess y x)
+  (avg y (/ x y)))
+
+(define (avg a b)
+  (/ (+ a b) 2))
+
+(define (sqrt-iter y x)
+  (if (< (abs (- y (improve-guess y x))) THRESHOLD)
+      (improve-guess y x)
+    (sqrt-iter (improve-guess y x) x)))
+
+#+end_src
+
+
+;; Ex 1.6
+This leads to a `Process scheme segmentation fault (core dumped)` which might be due to normal order evauluation of new-if which leads to infinite recursive looping
+
+#+begin_src lisp
+(define (new-if predicate then-clause else-clause)
+  (cond (predicate then-clause)
+        (else else-clause)))
+
+(new-if (= 2 3) 0 5)
+
+(cond ((=2 3) 0)
+      (else 5))
+
+(cond (f 0)
+      (else 5))
+
+5
+
+;; with 
+(define (sqrt-iter guess x)
+  (new-if (good-enough? guess x)
+          guess
+          (sqrt-iter (improve guess x)
+                     x)))
+
+(cond ((good-enough? guess x) guess)
+       (else (sqrt-iter (improve-guess x) x))))
+
+(cond (f guess)
+      (else (sqrt-iter (improve-guess x) x)))
+
+
+(sqrt-iter (improve-guess x) x)
+
+meh. i cannot really say why it failed
+#+end_src
+
+#+begin_src lisp
+;; Ex 1.7
+(define (sqrt-iter y x)
+  (if (< (/ (abs (- (improve-guess y x) y)) y) THRESHOLD)
+      (improve-guess y x)
+    (sqrt-iter (improve-guess y x) x)))
+#+end_src
+
+
+#+begin_src lisp
+;; Ex 1.8
+
+(define (cubert x)
+  (cube-iter 1 x))
+
+(define THRESHOLD 0.00001)
+
+(define (improve-guess y x)
+  (/ (+ (/ x (* y y)) (* 2 y)) 3))
+
+(define (cube-iter y x)
+  (if (< (abs (- y (improve-guess y x))) THRESHOLD)
+      (improve-guess y x)
+    (cube-iter (improve-guess y x) x)))
+
+#+end_src
