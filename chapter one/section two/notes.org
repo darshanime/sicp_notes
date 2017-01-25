@@ -1,0 +1,215 @@
+# Chapter One, Section Two
+
+In section one, we used primitive arithmetic operators, combined them, and abstracted these composite operators by defining them as compound operators
+We defined some procedures, which are involved in *local evolution* of a computational process. We can talk about the *global* behavior by looking at the procedures
+
+** Linear recursion and iteration
+
+The factorial function is defined simply as:
+n! = n.(n-1)...1
+
+#+begin_src lisp
+(define (factorial n)
+  (if (or (= n 1) (= n 0)) 1 (* n (factorial (- n 1)))))
+#+end_src
+
+To convert this to an iterative process, we need /state variables/.
+We need:
+1. a counter to count to \n\
+2. a running product
+
+We can count down to 1 or up to n
+#+begin_src lisp
+(define (factorial n)
+  (fact-iter n 1 n))
+
+(define (fact-iter counter running-product n)
+  (if (= counter 1)
+      running-product
+    (fact-iter (- counter 1) (* running-product counter) n)))
+#+end_src
+
+The first one is a recursive process - it consists of /deferred operations/
+The length of the deferred operations grows linearly with n(because at each interval, we call the same function(itself) exactly one)
+
+The second one is a iterative process - it needs /state variables/ to give a glimpse of it's current execution progress. All(?) iterative processes have a fixed rule that describes how the state variables should be updated as the process moves from iteration to iteration and also a terminal condition. 
+
+Since we needed to run the iterative process ~n~ times, our program was a linear iterative process.
+
+*Note*: The definition of fact-iter above is recursive(recursive procedure), even though the process itself is iterative. Generally, the process is recursive if the the self-invokation is when applying an operator to it. So, ~(* n (factorial (- n 1)))~ is recursive, whereas ~(factorial 1 1 n)~ even if inside the ~factorial~ body is not
+
+*Tail recursion* - when you can define iterative processes with recursive procedures. This is the case if the operator is the procedure itself
+
+#+begin_src lisp
+;; Ex 1.9
+
+(define (+ a b)
+  (if (= a 0)
+      b
+      (inc (+ (dec a) b))))
+
+This is recursive because the procedure self-invokes as an operand not as an operator
+
+(+ 4 5)
+(inc (+ 3 5))
+(inc (inc (+ 2 5)))
+(inc (inc (inc (+ 1 5))))
+(inc (inc (inc (inc (+ 0 5)))))
+(inc (inc (inc (inc 5))))
+(inc (inc (inc 6)))
+(inc (inc 7))
+(inc 8)
+9
+
+(define (+ a b)
+  (if (= a 0)
+      b
+      (+ (dec a) (inc b)))
+
+This is iterative because the procedure self-invokes as an operator
+
+(+ 4 5)
+(+ 3 6)
+(+ 2 7)
+(+ 1 8)
+(+ 0 9)
+9
+#+end_src
+
+
+#+begin_src lisp
+;; Ex 1.10
+
+(define (A x y)
+  (cond ((= y 0) 0)
+        ((= x 0) (* 2 y))
+        ((= y 1) 2)
+        (else (A (- x 1)
+                 (A x (- y 1))))))
+
+(A x 0)
+0
+
+(A 0 y)
+2y
+
+(A x 1)
+2
+
+(A 1 10)
+(A 0 (A 1 9))
+(* 2 (A 1 9)) ;; since the interpreter follows applicative-order
+(* 2 (A 0 (A 1 8)))
+(* 2 (* 2 (A 1 8)))
+(* 2 (* 2 (A 0 (A 1 7))))
+(* 2 (* 2 (* 2 (A 1 7))))
+;; and so on. So, 2^10 (as (A 1 1) -> 2)
+
+(A 2 4)
+(A 1 (A 2 3))
+(A 0 (A 1 (- (A 2 3) 1)))
+(* 2 (A 1 (- (A 2 3) 1)))
+(* 2 ((A 0 (- (A 2 2) 1)))) ;; so on
+
+;; simpler if we use normal order for dry-run
+(A 2 4)
+(A 1 (A 2 3))
+(A 1 (A 1 (A 2 2)))
+(A 1 (A 1 (A 1 (A 2 1))))
+(A 1 (A 1 (A 1 2)))
+(A 1 (A 1 (A 0 (A 1 1))))
+(A 1 (A 1 (* 2 (A 1 1))))
+(A 1 (A 1 (* 2 2)))
+(A 1 (A 1 4))
+(A 1 (A 0 (A 1 3)))
+(A 1 (* 2 (A 1 3)))
+;; and so on
+
+f --> 2*n
+g --> 2**n
+(A 1 n)
+(A 0 (A 1 (- n 1)))
+(* 2 (A 1 (-n 1)))
+(* 2 (A 0 (A 1 (- n 2))))
+(* 2 (* 2 (A 1 (-n 2))))
+;; and so on, so, 2**n
+
+h--> 
+(A 2 n)
+(A 1 (A 2 (- n 1)))
+(A 1 (A 1 (A 2 (- n 2))))
+(A 1 (A 1 (A 1 (A 2 (- n 3)))))
+(A 1 (A 1 ... (A 1 2)))
+(A 1 (A 1 ... (A 0 (A 1 1))))
+(A 1 (A 1 ... (* 2 (A 1 1))))
+(A 1 (A 1 ... (* 2 2)))
+(A 1 (A 1 ... (A 1 4)))
+(A 1 (A 1 ... (A 0 (A 1 3))))
+(A 1 (A 1 ... (* 2 (A 1 3))))
+(A 1 (A 1 ... (* 2 (A 0 (A 1 2)))))
+(A 1 (A 1 ... (* 2 (* 2 (A 1 2)))))
+;; can't make out
+
+#+end_src
+
+** Tree Recursion
+
+Earlier, in recursion, the method self-invoked itself only once. If we do it 2 times, we get a binary tree recursion
+
+#+begin_src scheme
+(define (fib-tree n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib-tree (- n 1)) (fib-tree (- n 2))))))
+#+end_src
+
+This definition is exponential in time, but linear in space because for each n, the number of levels the tree can grow to is /O(n)/ and the number of nodes in the last level is: /O(n)/. At any point, we need to know which nodes are above us (f(n)--> f(n-1)+f(n-2)), so, we need to know our ancestors, which can grow linearly
+
+Generally, *number of steps* grows with number of nodes, *space* with maximum depth of tree.
+So, the number of nodes is clearly exponential as each node can split into 2 nodes. The depth is linear
+
+Writing ~Fib~ iteratively: we need the state variables, rule for how they change and terminal condition 
+
+Consider: 
+F(n) = F(n-1) + F(n-2)
+consider:
+a -> F(n-1)
+b-> F(n-2)
+
+now, next value of a, a' -> F(n) which is a+b
+and, next value of b, b' -> F(n-1) which is a
+
+So, a' --> a+b
+    b' --> a
+
+#+begin_src scheme
+;; Ex 1.11
+;; f(n) = f(n-1)+2f(n-2)+3f(n-3)
+;; Let a --> f(n-1)
+;;     b --> f(n-2)
+;;     c --> f(n-2)
+;;   
+;; Next value of a, a', f(n)
+;; which is a+2b+3c
+;; 
+;; Next value of b, b', f(n-1)
+;; which is a
+;; 
+;; Next value of c, c', f(n-1)
+;; which is b
+
+(define (recursive-function-iter a b c count)
+    (if (< count 3)
+         a 
+      (recursive-function-iter (+ a (* 2 b) (* 3 c)) a b (- count 1))))
+
+(define (recursive-function n)
+    (if (< n 3) 
+        n
+      (recursive-function-iter 2 1 0 n)))
+
+(recursive-function 4)
+11 
+;; should be 10. will have to investigate 
+#+end_src
+
