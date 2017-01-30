@@ -213,3 +213,79 @@ So, a' --> a+b
 ;; should be 10. will have to investigate 
 #+end_src
 
+
+#+begin_src scheme
+;; Ex 1.12
+(define (p r c)
+  (cond  ((> c r) 0)
+         ((= c 0) 0)
+         ((= r 0) 0)
+         ((= c 1) 1)
+         ((= r 1) 1)
+         (else (+ (p (- r 1) c) (p (- r 1) (- c 1))))))
+
+#+end_src
+
+** orders of growth
+
+Let $n$ be the input size, and $R(n)$ be the resources required. $R(n)$ can be anything, but generally, it is taken to be the number of elementary machine operations performed to get the answer for $n$.
+
+We say $R(n)$ has order of growth of $\theta(f(n))$ written like so:
+R(n) = \theta(f(n))
+if there are positive constants $k1$ and $k2$ such that:
+
+k1.f(n) <= R(n) <= k2.f(n)
+
+for sufficiently large $n$
+
+So, f(n) captures the order of growth of R(n).
+
+For linear recursive process for factorial, space and time grew as theta(f(n))
+For linear iterative process for factorial, space as theta(f(1)) and time grew as theta(f(n))
+For tree recursive Fib computation, time was exponential, space was linear
+
+For linear processes, doubling n doubles resources 
+For exponential processes, increasing n multiplies n by a constant factor
+For logarithmic processes, doubling n increases resource by constant amount 
+
+For recursive processes, generally, space is related to the depth of the tree
+and the time is related to the number of self calls per step(number of nodes in the tree)
+
+
+#+begin_src 
+;; Ex 1.14
+As noted above, the space is proportational to the depth of tree. At max, we can have n nodes (the lest most node will be n levels deep). Also, at each node, we have at max 2 children, so, we get 2^n running time max
+
+;; Ex 1.15
+
+(sine 12.15)
+(p (sine 4.333))
+(p (p (sine 1.333)))
+(p (p (p (sine 0.444))))
+(p (p (p (p (sine 0.148)))))
+(p (p (p (p (p (sine 0.049))))))
+Hence, 5 times
+
+We perform k iterations such that:
+n/3^k <= 0.1
+simplifying: space = time = theta(log(n))
+#+end_src
+
+When writing linear-iterative versions of linear-recursive algorithms, we save on space and not on the running time. Unless of course it is not linear-recursive process. 
+
+Also, remember that when asked to write linear-iterative processes, it is allowed to use recursive procedure such that tail recursion is possible, i.e. the procedure is the operator in the expression
+
+#+begin_src scheme
+(define (fast-exp b n)
+    (define (fast-exp-iter b n a)
+        (cond ((= n 0) a)
+              ((?even n) (fast-exp-iter (square b) (/ n 2) a))
+              (else (fast-exp-iter b (- n 1) (* a b)))))
+    (fast-exp-iter b n 1))
+
+(define (?even n)
+    (= (remainder n 2) 0))
+(define (square n)
+    (* n n))
+
+#+end_src
