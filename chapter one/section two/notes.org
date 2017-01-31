@@ -276,6 +276,7 @@ When writing linear-iterative versions of linear-recursive algorithms, we save o
 Also, remember that when asked to write linear-iterative processes, it is allowed to use recursive procedure such that tail recursion is possible, i.e. the procedure is the operator in the expression
 
 #+begin_src scheme
+;; Ex 1.16
 (define (fast-exp b n)
     (define (fast-exp-iter b n a)
         (cond ((= n 0) a)
@@ -287,5 +288,54 @@ Also, remember that when asked to write linear-iterative processes, it is allowe
     (= (remainder n 2) 0))
 (define (square n)
     (* n n))
+
+;; Ex 1.17
+(define (fast-add a b)
+    (cond ((= b 1) a)
+          ((?even b) (fast-add (double a) (halve b)))
+          (else (+ a (fast-add a (- b 1))))))
+
+(define (double a)
+    (* a 2))
+
+(define (halve a)
+    (/ a 2))
+
+(define (?even n)
+    (= (remainder n 2) 0))
+;; this is half recursive, when b is odd. Else it is iterative
+
+;; Ex 1.18
+(define (fast-add a b x)
+    (cond ((= b 1) a)
+          ((?even b) (fast-add (double a) (halve b)))
+          (else (+ a (fast-add a (- b 1))))))
+
+(define (double a)
+    (* a 2))
+
+(define (halve a)
+    (/ a 2))
+
+(define (?even n)
+    (= (remainder n 2) 0))
+
+;; Ex 1.19
+
+(define (fast-add a b)
+    (define (fast-add-iter a b x)
+        (cond ((= b 0) x)
+              ((?even b) (fast-add-iter (double a) (halve b) x))
+              (else (fast-add-iter a (- b 1) (+ x a)))))
+
+    (define (double a)
+        (* a 2))
+
+    (define (halve a)
+        (/ a 2))
+
+    (define (?even n)
+        (= (remainder n 2) 0))
+    (fast-add-iter a b 0))
 
 #+end_src
